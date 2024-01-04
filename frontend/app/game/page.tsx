@@ -1,23 +1,37 @@
 'use client';
+import getBoard from "./boardFetch";
 
 export default function Page() {
-    const callAPI = async () => {
-        try {
-            const res = await fetch(`http://localhost:8080/v1/games/game1/boards/board1`);
-            const data = await res.json();
-            console.log(data);
-        } catch (err) {
-            console.log(err);
-        }
-    };
-
 	return (
 		<div>
             <p>💣 MineSpeeder 🏳️</p>
-			<main>
-				<button onClick={callAPI}>Make API call</button>
-			</main>
+			<Board />
 		</div>
 	);
 }
 
+function Board () {
+    const { boardResp, isLoading, isError } = getBoard("game1", "board1")
+    if (isLoading) return <div>Loading...</div>
+    if (isError) return <div>Error...</div>
+    
+    const rows = [];
+    for (let y = 0; y < 4; y++) {
+        const columns = [];
+        for (let x = 0; x < 4; x++) {
+            columns.push(Tile(x+","+y, "H"));
+        }
+        rows.push(<tr>{columns}</tr>);
+    }
+    return <table><tbody>{rows}</tbody></table>;
+}
+
+function Tile (id: string, state: string) {
+    return (
+        <td>
+        <div key={id}>
+            {state}
+        </div>
+        </td>
+    )
+}
