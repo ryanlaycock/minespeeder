@@ -40,6 +40,44 @@
                     "required": true
                 }
             ]
+        },
+        "/v1/games/{gameId}/boards/{boardId}/actions": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/action"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "gameId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "name": "boardId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Action was created successfully"
+                    }
+                },
+                "summary": "Create an action on the board"
+            }
         }
     },
     "components": {
@@ -47,7 +85,10 @@
             "board": {
                 "description": "An individual MineSpeeder board, to be controlled by an individual player",
                 "required": [
-                    "tiles"
+                    "tiles",
+                    "height",
+                    "width",
+                    "numberOfBombs"
                 ],
                 "type": "object",
                 "properties": {
@@ -57,6 +98,18 @@
                         "items": {
                             "$ref": "#/components/schemas/tile"
                         }
+                    },
+                    "height": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "width": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "numberOfBombs": {
+                        "description": "",
+                        "type": "integer"
                     }
                 }
             },
@@ -94,6 +147,33 @@
                     "yPos": {
                         "description": "",
                         "type": "integer"
+                    }
+                }
+            },
+            "action": {
+                "description": "An action on a board",
+                "required": [
+                    "xPos",
+                    "yPos",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "xPos": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "yPos": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "type": {
+                        "description": "",
+                        "enum": [
+                            "reveal",
+                            "flag"
+                        ],
+                        "type": "string"
                     }
                 }
             }
