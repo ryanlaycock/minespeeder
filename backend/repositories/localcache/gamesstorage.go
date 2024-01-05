@@ -5,6 +5,8 @@ import (
 
 	"github.com/ryanlaycock/minespeeder/domain/games"
 	"fmt"
+	"math/rand"
+	"time"
 )
 
 type LocalCache struct {
@@ -55,10 +57,20 @@ func (l *LocalCache) AddBoard(gameId string, boardId string, boardOptions games.
 	board := games.Board{
 		Tiles: []games.Tile{},
 	}
+	rand.Seed(time.Now().UnixNano()) // Seed the random number generator
+
 	for x := 0; x < boardOptions.Width; x++ {
 		for y := 0; y < boardOptions.Height; y++ {
+			// Generate a random number between 0 and 2
+			randomNum := rand.Intn(3)
+			// Determine if the tile should be hidden based on the random number
+			state := games.Hidden
+			if randomNum == 0 {
+				state = games.Bomb
+			}		
+
 			tile := games.Tile{
-				State: games.Hidden,
+				State: state,
 				XPos:  x,
 				YPos:  y,
 			}
