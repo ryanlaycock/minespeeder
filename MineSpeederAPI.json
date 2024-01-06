@@ -1,0 +1,182 @@
+{
+    "openapi": "3.0.2",
+    "info": {
+        "title": "MineSpeederAPI",
+        "version": "1.0.0",
+        "description": "Backend API spec for the MineSpeeder game - an online Minesweeper inspired battle game"
+    },
+    "paths": {
+        "/v1/games/{gameId}/boards/{boardId}": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/board"
+                                }
+                            }
+                        },
+                        "description": "Returns a board from the server"
+                    }
+                },
+                "summary": "GET a specific board"
+            },
+            "parameters": [
+                {
+                    "name": "gameId",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "in": "path",
+                    "required": true
+                },
+                {
+                    "name": "boardId",
+                    "schema": {
+                        "type": "string"
+                    },
+                    "in": "path",
+                    "required": true
+                }
+            ]
+        },
+        "/v1/games/{gameId}/boards/{boardId}/actions": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/action"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "parameters": [
+                    {
+                        "name": "gameId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "name": "boardId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Action was created successfully"
+                    }
+                },
+                "summary": "Create an action on the board"
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "board": {
+                "description": "An individual MineSpeeder board, to be controlled by an individual player",
+                "required": [
+                    "tiles",
+                    "height",
+                    "width",
+                    "numberOfBombs"
+                ],
+                "type": "object",
+                "properties": {
+                    "tiles": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/tile"
+                        }
+                    },
+                    "height": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "width": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "numberOfBombs": {
+                        "description": "",
+                        "type": "integer"
+                    }
+                }
+            },
+            "tile": {
+                "description": "",
+                "required": [
+                    "state",
+                    "xPos",
+                    "yPos"
+                ],
+                "type": "object",
+                "properties": {
+                    "state": {
+                        "description": "",
+                        "enum": [
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "7",
+                            "8",
+                            "hidden",
+                            "empty",
+                            "flag",
+                            "bomb"
+                        ],
+                        "type": "string"
+                    },
+                    "xPos": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "yPos": {
+                        "description": "",
+                        "type": "integer"
+                    }
+                }
+            },
+            "action": {
+                "description": "An action on a board",
+                "required": [
+                    "xPos",
+                    "yPos",
+                    "type"
+                ],
+                "type": "object",
+                "properties": {
+                    "xPos": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "yPos": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "type": {
+                        "description": "",
+                        "enum": [
+                            "reveal",
+                            "flag"
+                        ],
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}
