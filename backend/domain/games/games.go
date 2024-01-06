@@ -94,7 +94,7 @@ func (b *Board) RevealEmptyNeighbourTile(xPos int, yPos int) {
 		return
 	}
 
-	if tile.Value != Empty {
+	if tile.Value != Empty || tile.CurrentState == Empty {
 		return
 	}
 
@@ -106,10 +106,10 @@ func (b *Board) RevealEmptyNeighbourTile(xPos int, yPos int) {
 			if x == xPos && y == yPos {
 				continue
 			}
-			if x < 0 || x >= 10 || y < 0 || y >= 10 {
+			if x < 0 || x >= b.Width || y < 0 || y >= b.Height {
 				continue
 			}
-			// b.RevealEmptyNeighbourTile(x, y) TODO Add back
+			b.RevealEmptyNeighbourTile(x, y)
 		}
 	}
 }
@@ -191,9 +191,7 @@ func createBoard(boardOptions BoardOptions) Board {
 		Tiles: []Tile{},
 	}
 	for _, row := range b {
-		for _, tile := range row {
-			board.Tiles = append(board.Tiles, tile)
-		}
+		board.Tiles = append(board.Tiles, row...)
 	}
 
 	return board
