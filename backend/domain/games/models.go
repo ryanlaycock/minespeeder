@@ -8,6 +8,9 @@ type Game struct {
 
 type Board struct {
 	Tiles []Tile
+	Height int
+	Width int
+	NumberOfBombs int
 }
 
 type BoardOptions struct {
@@ -17,7 +20,8 @@ type BoardOptions struct {
 }
 
 type Tile struct {
-	State TileState
+	Value TileState
+	CurrentState TileState
 	XPos  int
 	YPos  int
 }
@@ -37,4 +41,17 @@ const (
 	N6     TileState = "6"
 	N7     TileState = "7"
 	N8     TileState = "8"
+)
+
+type Action struct {
+	ActionType ActionType
+	XPos       int
+	YPos       int
+}
+
+type ActionType string
+
+const (
+	RevealAction ActionType = "reveal"
+	FlagAction   ActionType = "flag"
 )

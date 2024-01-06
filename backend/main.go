@@ -15,12 +15,11 @@ func main() {
 
 	// Temp setup to return an example board
 	gamesManager.CreateGame("game1")
-	gamesManager.AddBoard("game1", "board1", games.BoardOptions{
-		Width:  4,
-		Height: 4,
+	gamesManager.CreateBoard("game1", "board1", games.BoardOptions{
+		Width:  2,
+		Height: 2,
 		NumberOfBombs: 1,
 	})
-	gamesManager.StartGame("game1")
 
 	fmt.Println("Starting server")
 	m.ListenAndServe()

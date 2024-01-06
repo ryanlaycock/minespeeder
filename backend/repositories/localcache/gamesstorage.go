@@ -5,8 +5,6 @@ import (
 
 	"github.com/ryanlaycock/minespeeder/domain/games"
 	"fmt"
-	"math/rand"
-	"time"
 )
 
 type LocalCache struct {
@@ -35,49 +33,26 @@ func (l *LocalCache) CreateGame(gameId string) (games.Game, error) {
 	return game, nil
 }
 
-func (l *LocalCache) StartGame(gameId string) (games.Game, error) {
+func (l *LocalCache) GetBoard(gameId string, boardId string) (games.Board, error) {
 	game, err := l.GetGame(gameId)
 	if err != nil {
-		return games.Game{}, err
+		return games.Board{}, err
 	}
-	for _, board := range game.Boards {
-		for _, tile := range board.Tiles {
-			tile.State = games.Hidden
-		}
+
+	board, ok := game.Boards[boardId]
+	if !ok {
+		return games.Board{}, fmt.Errorf("board with id %s not found", boardId)
 	}
-	l.Games.Store(gameId, game)
-	return game, nil
+	return board, nil
 }
 
-func (l *LocalCache) AddBoard(gameId string, boardId string, boardOptions games.BoardOptions) (games.Game, error) {
+func (l *LocalCache) StoreBoard(gameId string, boardId string, board games.Board) (games.Board, error) {
 	game, err := l.GetGame(gameId)
 	if err != nil {
-		return games.Game{}, err
+		return games.Board{}, err
 	}
-	board := games.Board{
-		Tiles: []games.Tile{},
-	}
-	rand.Seed(time.Now().UnixNano()) // Seed the random number generator
 
-	for x := 0; x < boardOptions.Width; x++ {
-		for y := 0; y < boardOptions.Height; y++ {
-			// Generate a random number between 0 and 2
-			randomNum := rand.Intn(3)
-			// Determine if the tile should be hidden based on the random number
-			state := games.Hidden
-			if randomNum == 0 {
-				state = games.Bomb
-			}		
-
-			tile := games.Tile{
-				State: state,
-				XPos:  x,
-				YPos:  y,
-			}
-			board.Tiles = append(board.Tiles, tile)
-		}
-	}
 	game.Boards[boardId] = board
 	l.Games.Store(gameId, game)
-	return game, nil
+	return board, nil
 }
