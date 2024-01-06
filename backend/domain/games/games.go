@@ -109,7 +109,7 @@ func (b *Board) RevealEmptyNeighbourTile(xPos int, yPos int) {
 			if x < 0 || x >= 10 || y < 0 || y >= 10 {
 				continue
 			}
-			b.RevealEmptyNeighbourTile(x, y)
+			// b.RevealEmptyNeighbourTile(x, y) TODO Add back
 		}
 	}
 }
@@ -179,6 +179,10 @@ func createBoard(boardOptions BoardOptions) Board {
 					}
 				}
 			}
+			if bombCount == 0 {
+				b[x][y].Value = Empty
+				continue
+			}	
 			b[x][y].Value = TileState(strconv.Itoa(bombCount))
 		}
 	}
