@@ -1,38 +1,52 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function Tile({ value, onTileClick }) { 
+function Tile({ value, onLeftClick, onRightClick }) { 
   return (
     <button 
       className="tile"
-      onClick={onTileClick}
+      onClick={onLeftClick}
+      onContextMenu={(e) => {
+        e.preventDefault(); // Prevent the context menu from showing up
+        onRightClick();
+      }}
     >
       {value}
     </button>
   );
 }
 
-function BoardRow({tilesRow, y, tileClick}) {
+function BoardRow({tilesRow, y, doAction}) {
 
   return (
     <div className="board-row">
       {tilesRow.map((tile, x) => (
-        <Tile key={x+","+y} value={tile} onTileClick={() => tileClick(y, x)} />
+        <Tile 
+          key={x+","+y}
+          value={tile}
+          onLeftClick={() => doAction(y, x, actionType.REVEAL)}
+          onRightClick={() => doAction(y, x, actionType.FLAG)}
+        />
       ))}
     </div>
   )
 }
 
+let actionType = {
+  REVEAL: "reveal",
+  FLAG: "flag"
+}
+
 function Board({ width, height }) {
   var [tiles, setTiles] = useState(Array(width).fill(Array(height).fill("")));
 
-  function setTile(x, y) {
-    console.log("Clicked " + x + " " + y);
+  function doAction(x, y, actionType) {
+    console.log(actionType + " " + x + " " + y);
 
     axios.post('http://localhost:8080/v1/games/game1/boards/board1/actions', {
       "xPos": x,
       "yPos": y,
-      "type": "reveal"
+      "type": actionType
     })
     .then(response => {
       console.log(response);
@@ -73,7 +87,7 @@ function Board({ width, height }) {
                 value = "4️⃣";
                 break;
               case "5":
-                value = "5️⃣5️"
+                value = "5️⃣"
                 break;
               case "6":
                 value = "6️⃣";
@@ -101,7 +115,7 @@ function Board({ width, height }) {
   return (
     <>
       {tiles.map((tile, y) => (
-        <BoardRow key={y} tilesRow={tile} y={y} tileClick={setTile} />
+        <BoardRow key={y} tilesRow={tile} y={y} doAction={doAction} />
       ))}
     </>
   );

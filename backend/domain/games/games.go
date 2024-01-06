@@ -81,7 +81,12 @@ func (b *Board) ApplyAction(action Action) error {
 			b.RevealEmptyNeighbourTile(action.XPos, action.YPos)
 		}
 	case FlagAction:
-		tile.CurrentState = Flag
+		switch tile.CurrentState {
+		case Hidden:
+			tile.CurrentState = Flag
+		case Flag:
+			tile.CurrentState = Hidden
+		}
 	}
 
 	b.SetTile(action.XPos, action.YPos, *tile)

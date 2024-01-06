@@ -16,9 +16,9 @@ func main() {
 	// Temp setup to return an example board
 	gamesManager.CreateGame("game1")
 	gamesManager.CreateBoard("game1", "board1", games.BoardOptions{
-		Width:  4,
-		Height: 4,
-		NumberOfBombs: 2,
+		Width:  8, // TODO Fix these being the wrong way around
+		Height: 6,
+		NumberOfBombs: 3,
 	})
 
 	fmt.Println("Starting server")
