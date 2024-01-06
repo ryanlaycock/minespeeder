@@ -36,10 +36,13 @@ func (gm *GamesManager) CreateBoard(gameId string, boardId string, boardOptions 
 		return Board{}, err
 	}
 
-	board := createBoard(boardOptions)
-	board.Height = boardOptions.Height
-	board.Width = boardOptions.Width
-	board.NumberOfBombs = boardOptions.NumberOfBombs
+	board := Board{
+		Tiles:         []Tile{},
+		Height:        boardOptions.Height,
+		Width:         boardOptions.Width,
+		NumberOfBombs: boardOptions.NumberOfBombs,
+		RevealedTiles: 0,
+	}
 
 	board, err = gm.GamesStorage.StoreBoard(gameId, boardId, board)
 	if err != nil {
@@ -53,7 +56,11 @@ func (gm *GamesManager) ApplyAction(gameId string, boardId string, action Action
 	if err != nil {
 		return Board{}, err
 	}
-	fmt.Println(board)
+
+	if board.RevealedTiles == 0 {
+		// First move of the game, populate the board
+		board.PopulateBoard(action.XPos, action.YPos)
+	}
 
 	err = board.ApplyAction(action)
 	if err != nil {
@@ -143,40 +150,49 @@ func (b *Board) SetTile(xPos int, yPos int, tile Tile) {
 	for i, t := range b.Tiles {
 		if t.XPos == xPos && t.YPos == yPos {
 			b.Tiles[i] = tile
+			if tile.CurrentState != Hidden {
+				b.RevealedTiles++ // TODO This isn't right, it gets called from too many places
+				fmt.Printf("Revealed: %v. Remaining: %v\n", b.RevealedTiles, (b.Width*b.Height)-b.RevealedTiles)
+			}
 			return
 		}
 	}
 }
 
-func createBoard(boardOptions BoardOptions) Board {
-	b := make([][]Tile, boardOptions.Width)
-	for i := 0; i < boardOptions.Width; i++ {
-		b[i] = make([]Tile, boardOptions.Height)
+func (b *Board) PopulateBoard(startingXPos int, startingYPos int) error {
+	tiles := make([][]Tile, b.Width)
+	for i := 0; i < b.Width; i++ {
+		tiles[i] = make([]Tile, b.Height)
 	}
 
-	// Randomly set bombs
+	// Randomly set bombs, avoiding the starting and adjacent tiles
 	assignedBombs := 0
 	for {
-		x := rand.Intn(boardOptions.Width)
-		y := rand.Intn(boardOptions.Height)
-		if b[x][y].Value != Bomb {
-			b[x][y].Value = Bomb
+		x := rand.Intn(b.Width)
+		y := rand.Intn(b.Height)
+
+		if (x >= startingXPos-1 && x <= startingXPos+1) && (y >= startingYPos-1 && y <= startingYPos+1) {
+			// x,y is equal to or adjacent to starting tile so try again
+			continue
+		}
+		if tiles[x][y].Value != Bomb {
+			tiles[x][y].Value = Bomb
 			assignedBombs++
 		}
-		if assignedBombs == boardOptions.NumberOfBombs {
+		if assignedBombs == b.NumberOfBombs {
 			break
 		}
 	}
 
 	// Set numbers
-	for x := 0; x < boardOptions.Width; x++ {
-		for y := 0; y < boardOptions.Height; y++ {
+	for x := 0; x < b.Width; x++ {
+		for y := 0; y < b.Height; y++ {
 			// Set location and current state properties
-			b[x][y].CurrentState = Hidden
-			b[x][y].XPos = x
-			b[x][y].YPos = y
+			tiles[x][y].CurrentState = Hidden
+			tiles[x][y].XPos = x
+			tiles[x][y].YPos = y
 
-			if b[x][y].Value == Bomb {
+			if tiles[x][y].Value == Bomb {
 				continue
 			}
 
@@ -187,30 +203,27 @@ func createBoard(boardOptions BoardOptions) Board {
 					if x2 == x && y2 == y {
 						continue
 					}
-					if x2 < 0 || x2 >= boardOptions.Width || y2 < 0 || y2 >= boardOptions.Height {
+					if x2 < 0 || x2 >= b.Width || y2 < 0 || y2 >= b.Height {
 						continue
 					}
-					if b[x2][y2].Value == Bomb {
+					if tiles[x2][y2].Value == Bomb {
 						bombCount++
 					}
 				}
 			}
 			if bombCount == 0 {
-				b[x][y].Value = Empty
+				tiles[x][y].Value = Empty
 				continue
-			}	
-			b[x][y].Value = TileState(strconv.Itoa(bombCount))
+			}
+			tiles[x][y].Value = TileState(strconv.Itoa(bombCount))
 		}
 	}
 
-	board := Board{
-		Tiles: []Tile{},
-	}
-	for _, row := range b {
-		board.Tiles = append(board.Tiles, row...)
+	for _, row := range tiles {
+		b.Tiles = append(b.Tiles, row...)
 	}
 
-	return board
+	return nil
 }
 
 func NewGamesManager(

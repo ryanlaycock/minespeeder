@@ -18,7 +18,7 @@ func main() {
 	gamesManager.CreateBoard("game1", "board1", games.BoardOptions{
 		Width:  8, // TODO Fix these being the wrong way around
 		Height: 6,
-		NumberOfBombs: 3,
+		NumberOfBombs: 5,
 	})
 
 	fmt.Println("Starting server")

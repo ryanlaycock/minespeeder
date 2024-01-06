@@ -41,8 +41,6 @@ function Board({ width, height }) {
   var [tiles, setTiles] = useState(Array(width).fill(Array(height).fill("")));
 
   function doAction(x, y, actionType) {
-    console.log(actionType + " " + x + " " + y);
-
     axios.post('http://localhost:8080/v1/games/game1/boards/board1/actions', {
       "xPos": x,
       "yPos": y,
@@ -50,7 +48,10 @@ function Board({ width, height }) {
     })
     .then(response => {
       console.log(response);
-    });
+    })
+    .catch(error => {
+      console.error('There was an error sending actions', error);
+    });;
   }
 
   useEffect(() => {
@@ -106,7 +107,10 @@ function Board({ width, height }) {
           }
 
           setTiles(tilesCopy);
-        });
+        })
+        .catch(error => {
+          console.error('There was an error loading latest board update', error);
+        });;
     }, 100);
 
     return () => clearInterval(interval);
@@ -127,12 +131,14 @@ export default function Game() {
   useEffect(() => {
     axios.get('http://localhost:8080/v1/games/game1/boards/board1')
       .then(response => {
-        console.log(response);
         const height = response.data["height"];
         const width = response.data["width"];
         setBoardDimensions({ height, width });
-        console.log("Board dimensions: " + height + " " + width);
+      })
+      .catch(error => {
+        console.error('There was an error loading game', error);
       });
+      
   }, []);
 
   if (!boardDimensions) {
