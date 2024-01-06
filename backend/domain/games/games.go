@@ -94,9 +94,20 @@ func (b *Board) RevealEmptyNeighbourTile(xPos int, yPos int) {
 		return
 	}
 
-	if tile.Value != Empty || tile.CurrentState == Empty {
+	if tile.CurrentState != Hidden {
+		// Tile is already displayed so stop searching here
 		return
 	}
+
+	if tile.Value != Empty && tile.CurrentState == Hidden {
+		// Tile is not empty but is a neighbour to an empty tile so display it
+		// but don't search any further
+		tile.CurrentState = tile.Value
+		b.SetTile(xPos, yPos, *tile)
+		return
+	}
+
+	// Tile is empty so display it and search for any empty neighbours
 
 	tile.CurrentState = Empty
 	b.SetTile(xPos, yPos, *tile)
