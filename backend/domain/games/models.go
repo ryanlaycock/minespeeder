@@ -11,7 +11,9 @@ type Board struct {
 	Height int
 	Width int
 	NumberOfBombs int
-	RevealedTiles int
+	NumberOfTiles int
+	RemainingTiles int
+	RemainingBombs int
 }
 
 type BoardOptions struct {

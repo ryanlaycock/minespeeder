@@ -37,11 +37,13 @@ func (gm *GamesManager) CreateBoard(gameId string, boardId string, boardOptions 
 	}
 
 	board := Board{
-		Tiles:         []Tile{},
-		Height:        boardOptions.Height,
-		Width:         boardOptions.Width,
-		NumberOfBombs: boardOptions.NumberOfBombs,
-		RevealedTiles: 0,
+		Tiles:          []Tile{},
+		Height:         boardOptions.Height,
+		Width:          boardOptions.Width,
+		NumberOfBombs:  boardOptions.NumberOfBombs,
+		NumberOfTiles:  boardOptions.Height * boardOptions.Width,
+		RemainingTiles: boardOptions.Height * boardOptions.Width,
+		RemainingBombs: boardOptions.NumberOfBombs,
 	}
 
 	board, err = gm.GamesStorage.StoreBoard(gameId, boardId, board)
@@ -57,7 +59,7 @@ func (gm *GamesManager) ApplyAction(gameId string, boardId string, action Action
 		return Board{}, err
 	}
 
-	if board.RevealedTiles == 0 {
+	if board.RemainingTiles == board.NumberOfTiles {
 		// First move of the game, populate the board
 		board.PopulateBoard(action.XPos, action.YPos)
 	}
@@ -97,6 +99,7 @@ func (b *Board) ApplyAction(action Action) error {
 	}
 
 	b.SetTile(action.XPos, action.YPos, *tile)
+	b.UpdateBoardProgress()
 	return nil
 }
 
@@ -150,10 +153,6 @@ func (b *Board) SetTile(xPos int, yPos int, tile Tile) {
 	for i, t := range b.Tiles {
 		if t.XPos == xPos && t.YPos == yPos {
 			b.Tiles[i] = tile
-			if tile.CurrentState != Hidden {
-				b.RevealedTiles++ // TODO This isn't right, it gets called from too many places
-				fmt.Printf("Revealed: %v. Remaining: %v\n", b.RevealedTiles, (b.Width*b.Height)-b.RevealedTiles)
-			}
 			return
 		}
 	}
@@ -224,6 +223,21 @@ func (b *Board) PopulateBoard(startingXPos int, startingYPos int) error {
 	}
 
 	return nil
+}
+
+func (b *Board) UpdateBoardProgress() {
+	revealedTiles := 0
+	bombs := 0
+	for _, tile := range b.Tiles {
+		if tile.CurrentState != Hidden {
+			revealedTiles++
+		}
+		if tile.CurrentState == Flag {
+			bombs++
+		}
+	}
+	b.RemainingBombs = b.NumberOfBombs - bombs
+	b.RemainingTiles = b.NumberOfTiles - revealedTiles
 }
 
 func NewGamesManager(
