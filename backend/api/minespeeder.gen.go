@@ -24,6 +24,14 @@ const (
 	ActionTypeReveal ActionType = "reveal"
 )
 
+// Defines values for BoardState.
+const (
+	Completed  BoardState = "completed"
+	Failed     BoardState = "failed"
+	InProgress BoardState = "inProgress"
+	NotStarted BoardState = "notStarted"
+)
+
 // Defines values for TileState.
 const (
 	TileStateBomb   TileState = "bomb"
@@ -52,14 +60,18 @@ type ActionType string
 
 // Board An individual MineSpeeder board, to be controlled by an individual player
 type Board struct {
-	Height                 int    `json:"height"`
-	NumberOfBombs          int    `json:"numberOfBombs"`
-	NumberOfRemainingBombs int    `json:"numberOfRemainingBombs"`
-	NumberOfRemainingTiles int    `json:"numberOfRemainingTiles"`
-	NumberOfTiles          int    `json:"numberOfTiles"`
-	Tiles                  []Tile `json:"tiles"`
-	Width                  int    `json:"width"`
+	Height                 int        `json:"height"`
+	NumberOfBombs          int        `json:"numberOfBombs"`
+	NumberOfRemainingBombs int        `json:"numberOfRemainingBombs"`
+	NumberOfRemainingTiles int        `json:"numberOfRemainingTiles"`
+	NumberOfTiles          int        `json:"numberOfTiles"`
+	State                  BoardState `json:"state"`
+	Tiles                  []Tile     `json:"tiles"`
+	Width                  int        `json:"width"`
 }
+
+// BoardState defines model for Board.State.
+type BoardState string
 
 // Tile defines model for tile.
 type Tile struct {
@@ -305,18 +317,19 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xVTW/bOBD9K8TsHrmWnexuC93sogh8KGqkQS9BDpQ4kplKJEtSTgVD/70YUm78lY8C",
-	"LdATJXDe48ybx+EWStNao1EHD/kWfLnGVsRPUQZlNH1J9KVTNv3CXLO0xYxmghVGOAkcrDMWXVAYwaG3",
-	"SCvqroX8FhxuUDTAoWpEDXd8DAAfnNI1DBy+rcweEpQOWKOjnf6JnYGDw6+dcijpiEgwRo/8j+eY4h7L",
-	"QGwp33NVKS3VRslONOyD0vjJIkp0qUDOgmEFstLo4EzToGRFz8QByDaiR3cixRpVvQ7nS9NdW6D7WC1M",
-	"W/jnQ66xFUorXf9M7I1q8IXYZ0LCbksFbOPH3w4ryOGv7NE12WiZjKIjKvEI50RP/w9KhvUr+pdO4zu9",
-	"dsBjkY4zf7LqJ6U754qYfL49ap0PIhzYeAYcLoDDJXD4Fzj8Bxz+Bw5vgMNbyl1JiRo4YGtDv7M7ma4t",
-	"fo/rU4r8wP2nBRJK6cqc+n4hyi+oJZuvlsxbLFllHAtrPLgCtWiR/UN2N7pROm36B0SLjintLWXDChFC",
-	"gzGYLqAKJCns8cxXS+CwQefT2bPJdDKlWo1FLayCHC4n0wkJbEVYx/KzzSwjRp9taVnKIYsX0mfbuC7l",
-	"QGE1xhtGzRNU2VJCDlcYPs+uCHwVoYsIXCQYkI7eGu1Try+mU1rogqOOZMLaRpWRLrv3aRQms790FdKM",
-	"iaofqn2NoXPa78Ymq5xpo9oe3Wbsru/aVrie8n9/w0TsiqpUOU7agcRxosWAzkN+uwVFzCQYWZ7EzyFJ",
-	"BftWCa5Dvpf/kRUHfpao2BPrtUx3A39N27L0ikTxrfFn+rcy/pkGzkf4n69HCkYfFkb2v8xk4/s8HE4E",
-	"SmY4sfbszIOX3vAH4VnpUASUzHdlid5XXdP0R1Z8F0NoAjy+/eTbH04fvgcAAP//RpxQ60oIAAA=",
+	"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",
+	"pPgumtAEePqrIN1+V/rwLQAA///PolxTpAgAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

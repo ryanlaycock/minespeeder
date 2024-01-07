@@ -34,6 +34,12 @@ function BoardRow({tilesRow, y, doAction}) {
 function BoardProgress({ boardProgress }) {
   return (
     <div className="board-progress">
+      {boardProgress.state === "completed" && ( // TODO Understand this syntax :D 
+        <div>You won!</div>
+      )}
+      {boardProgress.state === "failed" && ( // TODO Understand this syntax :D 
+        <div>Exploded 💥 Start again!</div>
+      )}
       <div className="board-progress-tiles">
         <div className="board-progress-tiles-remaining">
           {boardProgress.numOfRemainingTiles} / {boardProgress.numOfTiles} tiles remaining
@@ -59,7 +65,8 @@ function Board({ width, height }) {
     numOfTiles: 0,
     numOfBombs: 0,
     numOfRemainingTiles: 0,
-    numOfRemainingBombs: 0
+    numOfRemainingBombs: 0,
+    state: ""
   });
 
   function doAction(x, y, actionType) {
@@ -133,7 +140,8 @@ function Board({ width, height }) {
             numOfTiles: response.data["numberOfTiles"],
             numOfBombs: response.data["numberOfBombs"],
             numOfRemainingTiles: response.data["numberOfRemainingTiles"],
-            numOfRemainingBombs: response.data["numberOfRemainingBombs"]
+            numOfRemainingBombs: response.data["numberOfRemainingBombs"],
+            state: response.data["state"]
           })
         })
         .catch(error => {

@@ -7,26 +7,27 @@ type Game struct {
 }
 
 type Board struct {
-	Tiles []Tile
-	Height int
-	Width int
-	NumberOfBombs int
-	NumberOfTiles int
+	Tiles          []Tile
+	Height         int
+	Width          int
+	NumberOfBombs  int
+	NumberOfTiles  int
 	RemainingTiles int
 	RemainingBombs int
+	State          BoardState
 }
 
 type BoardOptions struct {
-	Width  int
-	Height int
+	Width         int
+	Height        int
 	NumberOfBombs int
 }
 
 type Tile struct {
-	Value TileState
+	Value        TileState
 	CurrentState TileState
-	XPos  int
-	YPos  int
+	XPos         int
+	YPos         int
 }
 
 type TileState string
@@ -57,4 +58,13 @@ type ActionType string
 const (
 	RevealAction ActionType = "reveal"
 	FlagAction   ActionType = "flag"
+)
+
+type BoardState string
+
+const (
+	NotStarted BoardState = "notStarted"
+	InProgress BoardState = "inProgress"
+	Completed  BoardState = "completed"
+	Failed     BoardState = "failed"
 )

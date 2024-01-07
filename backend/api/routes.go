@@ -77,6 +77,7 @@ func DomainBoardToAPIBoard(board games.Board) Board {
 		NumberOfRemainingBombs: board.RemainingBombs,
 		NumberOfRemainingTiles: board.RemainingTiles,
 		NumberOfTiles:          board.NumberOfTiles,
+		State:                  BoardState(board.State),
 	}
 
 	for _, tile := range board.Tiles {

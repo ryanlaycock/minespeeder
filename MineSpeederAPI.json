@@ -91,7 +91,8 @@
                     "numberOfBombs",
                     "numberOfTiles",
                     "numberOfRemainingTiles",
-                    "numberOfRemainingBombs"
+                    "numberOfRemainingBombs",
+                    "state"
                 ],
                 "type": "object",
                 "properties": {
@@ -125,6 +126,16 @@
                     "numberOfRemainingBombs": {
                         "description": "",
                         "type": "integer"
+                    },
+                    "state": {
+                        "description": "",
+                        "enum": [
+                            "notStarted",
+                            "inProgress",
+                            "completed",
+                            "failed"
+                        ],
+                        "type": "string"
                     }
                 }
             },
