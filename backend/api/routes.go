@@ -70,10 +70,14 @@ func (m *MineSpeederServer) PostV1GamesGameIdBoardsBoardIdActions(
 // DomainBoardToAPIBoard converts a games.Board to a Board
 func DomainBoardToAPIBoard(board games.Board) Board {
 	apiBoard := Board{
-		Tiles:         []Tile{},
-		Height:        board.Height,
-		Width:         board.Width,
-		NumberOfBombs: board.NumberOfBombs,
+		Tiles:                  []Tile{},
+		Height:                 board.Height,
+		Width:                  board.Width,
+		NumberOfBombs:          board.NumberOfBombs,
+		NumberOfRemainingBombs: board.RemainingBombs,
+		NumberOfRemainingTiles: board.RemainingTiles,
+		NumberOfTiles:          board.NumberOfTiles,
+		State:                  BoardState(board.State),
 	}
 
 	for _, tile := range board.Tiles {

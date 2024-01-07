@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"time"
 )
 
 type GamesStorage interface {
@@ -30,6 +31,10 @@ func (gm *GamesManager) GetBoard(gameId string, boardId string) (Board, error) {
 	return gm.GamesStorage.GetBoard(gameId, boardId)
 }
 
+const (
+	BoardRestartDelaySeconds = 2
+)
+
 func (gm *GamesManager) CreateBoard(gameId string, boardId string, boardOptions BoardOptions) (Board, error) {
 	_, err := gm.GamesStorage.GetGame(gameId)
 	if err != nil {
@@ -37,12 +42,16 @@ func (gm *GamesManager) CreateBoard(gameId string, boardId string, boardOptions 
 	}
 
 	board := Board{
-		Tiles:         []Tile{},
-		Height:        boardOptions.Height,
-		Width:         boardOptions.Width,
-		NumberOfBombs: boardOptions.NumberOfBombs,
-		RevealedTiles: 0,
+		Tiles:          []Tile{},
+		Height:         boardOptions.Height,
+		Width:          boardOptions.Width,
+		NumberOfBombs:  boardOptions.NumberOfBombs,
+		NumberOfTiles:  boardOptions.Height * boardOptions.Width,
+		RemainingTiles: boardOptions.Height * boardOptions.Width,
+		RemainingBombs: boardOptions.NumberOfBombs,
+		State:          NotStarted,
 	}
+	board.GenerateEmptyBoard()
 
 	board, err = gm.GamesStorage.StoreBoard(gameId, boardId, board)
 	if err != nil {
@@ -51,20 +60,49 @@ func (gm *GamesManager) CreateBoard(gameId string, boardId string, boardOptions 
 	return board, nil
 }
 
+func (b *Board) GenerateEmptyBoard() {
+	b.Tiles = []Tile{} // Clear tile set
+	// And rebuild, but all hidden again
+	for x := 0; x < b.Width; x++ {
+		for y := 0; y < b.Height; y++ {
+			b.Tiles = append(b.Tiles, Tile{
+				Value:        Hidden,
+				CurrentState: Hidden,
+				XPos:         x,
+				YPos:         y,
+			})
+		}
+	}
+
+	b.RemainingBombs = b.NumberOfBombs
+	b.RemainingTiles = b.NumberOfTiles
+}
+
 func (gm *GamesManager) ApplyAction(gameId string, boardId string, action Action) (Board, error) {
 	board, err := gm.GamesStorage.GetBoard(gameId, boardId)
 	if err != nil {
 		return Board{}, err
 	}
 
-	if board.RevealedTiles == 0 {
+	if board.RemainingTiles == board.NumberOfTiles {
 		// First move of the game, populate the board
 		board.PopulateBoard(action.XPos, action.YPos)
+		board.State = InProgress
 	}
 
 	err = board.ApplyAction(action)
 	if err != nil {
 		return Board{}, err
+	}
+
+	if board.State == Failed {
+		go func () {
+			time.Sleep(BoardRestartDelaySeconds * time.Second)
+			fmt.Println("Restarting board")
+			board.State = InProgress
+			board.GenerateEmptyBoard()
+			gm.GamesStorage.StoreBoard(gameId, boardId, board)
+		}()
 	}
 
 	board, err = gm.GamesStorage.StoreBoard(gameId, boardId, board)
@@ -97,6 +135,7 @@ func (b *Board) ApplyAction(action Action) error {
 	}
 
 	b.SetTile(action.XPos, action.YPos, *tile)
+	b.UpdateBoardProgress()
 	return nil
 }
 
@@ -150,10 +189,6 @@ func (b *Board) SetTile(xPos int, yPos int, tile Tile) {
 	for i, t := range b.Tiles {
 		if t.XPos == xPos && t.YPos == yPos {
 			b.Tiles[i] = tile
-			if tile.CurrentState != Hidden {
-				b.RevealedTiles++ // TODO This isn't right, it gets called from too many places
-				fmt.Printf("Revealed: %v. Remaining: %v\n", b.RevealedTiles, (b.Width*b.Height)-b.RevealedTiles)
-			}
 			return
 		}
 	}
@@ -218,12 +253,33 @@ func (b *Board) PopulateBoard(startingXPos int, startingYPos int) error {
 			tiles[x][y].Value = TileState(strconv.Itoa(bombCount))
 		}
 	}
-
-	for _, row := range tiles {
-		b.Tiles = append(b.Tiles, row...)
+	for i, tile := range b.Tiles {
+		b.Tiles[i] = tiles[tile.XPos][tile.YPos]
 	}
 
 	return nil
+}
+
+func (b *Board) UpdateBoardProgress() {
+	revealedTiles := 0
+	bombs := 0
+	for _, tile := range b.Tiles {
+		if tile.CurrentState == Bomb {
+			// Uncovered a bomb, board over
+			b.State = Failed
+		}
+		if tile.CurrentState != Hidden {
+			revealedTiles++
+		}
+		if tile.CurrentState == Flag {
+			bombs++
+		}
+	}
+	b.RemainingBombs = b.NumberOfBombs - bombs
+	b.RemainingTiles = b.NumberOfTiles - revealedTiles
+	if b.RemainingTiles == 0 && b.State == InProgress {
+		b.State = Completed
+	}
 }
 
 func NewGamesManager(

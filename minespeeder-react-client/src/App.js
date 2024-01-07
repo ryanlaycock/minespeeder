@@ -17,7 +17,6 @@ function Tile({ value, onLeftClick, onRightClick }) {
 }
 
 function BoardRow({tilesRow, y, doAction}) {
-
   return (
     <div className="board-row">
       {tilesRow.map((tile, x) => (
@@ -32,6 +31,29 @@ function BoardRow({tilesRow, y, doAction}) {
   )
 }
 
+function BoardProgress({ boardProgress }) {
+  return (
+    <div className="board-progress">
+      {boardProgress.state === "completed" && ( // TODO Understand this syntax :D 
+        <div>You won!</div>
+      )}
+      {boardProgress.state === "failed" && ( // TODO Understand this syntax :D 
+        <div>Exploded 💥 Start again!</div>
+      )}
+      <div className="board-progress-tiles">
+        <div className="board-progress-tiles-remaining">
+          {boardProgress.numOfRemainingTiles} / {boardProgress.numOfTiles} tiles remaining
+        </div>
+      </div>
+      <div className="board-progress-bombs">
+        <div className="board-progress-bombs-remaining">
+          {boardProgress.numOfRemainingBombs} / {boardProgress.numOfBombs} bombs remaining
+        </div>
+      </div>
+    </div>
+  )
+}
+
 let actionType = {
   REVEAL: "reveal",
   FLAG: "flag"
@@ -39,6 +61,13 @@ let actionType = {
 
 function Board({ width, height }) {
   var [tiles, setTiles] = useState(Array(width).fill(Array(height).fill("")));
+  var [boardProgress, setBoardProgress] = useState({
+    numOfTiles: 0,
+    numOfBombs: 0,
+    numOfRemainingTiles: 0,
+    numOfRemainingBombs: 0,
+    state: ""
+  });
 
   function doAction(x, y, actionType) {
     axios.post('http://localhost:8080/v1/games/game1/boards/board1/actions', {
@@ -107,6 +136,13 @@ function Board({ width, height }) {
           }
 
           setTiles(tilesCopy);
+          setBoardProgress({
+            numOfTiles: response.data["numberOfTiles"],
+            numOfBombs: response.data["numberOfBombs"],
+            numOfRemainingTiles: response.data["numberOfRemainingTiles"],
+            numOfRemainingBombs: response.data["numberOfRemainingBombs"],
+            state: response.data["state"]
+          })
         })
         .catch(error => {
           console.error('There was an error loading latest board update', error);
@@ -119,8 +155,9 @@ function Board({ width, height }) {
   return (
     <>
       {tiles.map((tile, y) => (
-        <BoardRow key={y} tilesRow={tile} y={y} doAction={doAction} />
+          <BoardRow key={y} tilesRow={tile} y={y} doAction={doAction} />
       ))}
+      <BoardProgress boardProgress={boardProgress} />
     </>
   );
 }

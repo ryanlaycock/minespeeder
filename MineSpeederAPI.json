@@ -88,7 +88,11 @@
                     "tiles",
                     "height",
                     "width",
-                    "numberOfBombs"
+                    "numberOfBombs",
+                    "numberOfTiles",
+                    "numberOfRemainingTiles",
+                    "numberOfRemainingBombs",
+                    "state"
                 ],
                 "type": "object",
                 "properties": {
@@ -110,6 +114,28 @@
                     "numberOfBombs": {
                         "description": "",
                         "type": "integer"
+                    },
+                    "numberOfTiles": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "numberOfRemainingTiles": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "numberOfRemainingBombs": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "state": {
+                        "description": "",
+                        "enum": [
+                            "notStarted",
+                            "inProgress",
+                            "completed",
+                            "failed"
+                        ],
+                        "type": "string"
                     }
                 }
             },
