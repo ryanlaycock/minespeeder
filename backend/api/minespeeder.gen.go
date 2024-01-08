@@ -32,6 +32,13 @@ const (
 	NotStarted BoardState = "notStarted"
 )
 
+// Defines values for GameState.
+const (
+	Created  GameState = "created"
+	Finished GameState = "finished"
+	Started  GameState = "started"
+)
+
 // Defines values for TileState.
 const (
 	TileStateBomb   TileState = "bomb"
@@ -61,6 +68,7 @@ type ActionType string
 // Board An individual MineSpeeder board, to be controlled by an individual player
 type Board struct {
 	Height                 int        `json:"height"`
+	Id                     string     `json:"id"`
 	NumberOfBombs          int        `json:"numberOfBombs"`
 	NumberOfRemainingBombs int        `json:"numberOfRemainingBombs"`
 	NumberOfRemainingTiles int        `json:"numberOfRemainingTiles"`
@@ -73,6 +81,35 @@ type Board struct {
 // BoardState defines model for Board.State.
 type BoardState string
 
+// BoardOptions defines model for boardOptions.
+type BoardOptions struct {
+	Height        int `json:"height"`
+	NumberOfBombs int `json:"numberOfBombs"`
+	Width         int `json:"width"`
+}
+
+// CreateGameRequest defines model for createGameRequest.
+type CreateGameRequest struct {
+	BoardOptions   BoardOptions `json:"boardOptions"`
+	Id             string       `json:"id"`
+	NumberOfBoards int          `json:"numberOfBoards"`
+}
+
+// Game defines model for game.
+type Game struct {
+	BoardOptions BoardOptions `json:"boardOptions"`
+	Boards       []Board      `json:"boards"`
+
+	// Duration seconds of game duration, from started to finished
+	Duration       int       `json:"duration"`
+	Id             string    `json:"id"`
+	NumberOfBoards int       `json:"numberOfBoards"`
+	State          GameState `json:"state"`
+}
+
+// GameState defines model for Game.State.
+type GameState string
+
 // Tile defines model for tile.
 type Tile struct {
 	State TileState `json:"state"`
@@ -83,12 +120,24 @@ type Tile struct {
 // TileState defines model for Tile.State.
 type TileState string
 
+// PostV1GamesJSONRequestBody defines body for PostV1Games for application/json ContentType.
+type PostV1GamesJSONRequestBody = CreateGameRequest
+
 // PostV1GamesGameIdBoardsBoardIdActionsJSONRequestBody defines body for PostV1GamesGameIdBoardsBoardIdActions for application/json ContentType.
 type PostV1GamesGameIdBoardsBoardIdActionsJSONRequestBody = Action
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// GET a specific board
+	// Creating a game
+	// (POST /v1/games)
+	PostV1Games(w http.ResponseWriter, r *http.Request)
+	// Get a specific game
+	// (GET /v1/games/{gameId})
+	GetV1GamesGameId(w http.ResponseWriter, r *http.Request, gameId string)
+	// Get all boards for a game
+	// (GET /v1/games/{gameId}/boards)
+	GetV1GamesGameIdBoards(w http.ResponseWriter, r *http.Request, gameId string)
+	// Get a specific board
 	// (GET /v1/games/{gameId}/boards/{boardId})
 	GetV1GamesGameIdBoardsBoardId(w http.ResponseWriter, r *http.Request, gameId string, boardId string)
 	// Create an action on the board
@@ -100,7 +149,25 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
-// GET a specific board
+// Creating a game
+// (POST /v1/games)
+func (_ Unimplemented) PostV1Games(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a specific game
+// (GET /v1/games/{gameId})
+func (_ Unimplemented) GetV1GamesGameId(w http.ResponseWriter, r *http.Request, gameId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get all boards for a game
+// (GET /v1/games/{gameId}/boards)
+func (_ Unimplemented) GetV1GamesGameIdBoards(w http.ResponseWriter, r *http.Request, gameId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Get a specific board
 // (GET /v1/games/{gameId}/boards/{boardId})
 func (_ Unimplemented) GetV1GamesGameIdBoardsBoardId(w http.ResponseWriter, r *http.Request, gameId string, boardId string) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -120,6 +187,73 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// PostV1Games operation middleware
+func (siw *ServerInterfaceWrapper) PostV1Games(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostV1Games(w, r)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetV1GamesGameId operation middleware
+func (siw *ServerInterfaceWrapper) GetV1GamesGameId(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "gameId" -------------
+	var gameId string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "gameId", runtime.ParamLocationPath, chi.URLParam(r, "gameId"), &gameId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "gameId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetV1GamesGameId(w, r, gameId)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetV1GamesGameIdBoards operation middleware
+func (siw *ServerInterfaceWrapper) GetV1GamesGameIdBoards(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "gameId" -------------
+	var gameId string
+
+	err = runtime.BindStyledParameterWithLocation("simple", false, "gameId", runtime.ParamLocationPath, chi.URLParam(r, "gameId"), &gameId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "gameId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetV1GamesGameIdBoards(w, r, gameId)
+	}))
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
 
 // GetV1GamesGameIdBoardsBoardId operation middleware
 func (siw *ServerInterfaceWrapper) GetV1GamesGameIdBoardsBoardId(w http.ResponseWriter, r *http.Request) {
@@ -305,6 +439,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/v1/games", wrapper.PostV1Games)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/v1/games/{gameId}", wrapper.GetV1GamesGameId)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/v1/games/{gameId}/boards", wrapper.GetV1GamesGameIdBoards)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/v1/games/{gameId}/boards/{boardId}", wrapper.GetV1GamesGameIdBoardsBoardId)
 	})
 	r.Group(func(r chi.Router) {
@@ -317,19 +460,23 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xWy27bOhD9FWLuXfJadnJf0M4uisCLokYSdBNkQYkjmalEsiTlVDD078WQcuNXHgVa",
-	"oCtS4Mxw5pwzQ22hNK01GnXwkG/Bl2tsRdyKMiijaSfRl07Z9AlzzdIRM5oJVhjhJHCwzlh0QWF0Dr1F",
-	"WlF3LeR34HCDogEOVSNquOejAfjglK5h4PB1ZfY8QemANTo66Z85GTg4/NIph5KuiAFG6zH+0z2meMAy",
-	"ULSU77mqlJZqo2QnGvZBabyxiBJdKpCzYFiBrDQ6ONM0KFnRM3HgZBvRozuBYo2qXofzpemuLdB9rBam",
-	"LfzLJtfYCqWVrn/E9lY1+IrtCyY+iHDAojbhJggXkAhXeuVM7dAT3KSiBtNBJVSD8izJYXeZCtjGzZ8O",
-	"K8jhj+xJh9kowoyso1cKI5wTPX0/KhnWb1BEuo3vGNg5HsN+jMWzOD5Lxg6qc3qLReTbI1GcQDsDDhfA",
-	"4RI4/A0c/gEO/wKH/4DD/1SDkhI1cMDWhn7XSCTntvg1/ZRS5Ad9dVogeSldmdOOWojyM2rJ5qsl8xZL",
-	"VhnHwhoPmqsWLbK/qJGMbpROh/4R0aJjSntL2bBChNBgNKbWVoEghb0489USOGzQ+XT3bDKdTKlWY1EL",
-	"qyCHy8l0QgBbEdax/Gwzyyiiz7a0LOWQxVb32TauSzmQWY2xd4k8QZUtJeRwheHT7Iqcr6LrIjoukhsQ",
-	"jt4a7RPXF9MpLTQ6UMdgwtpGlTFc9uDTkE2if60l0vSKqB+ifY2hc9rvBjKrnGkj2h7dZmTXd20rXE/5",
-	"v79lIrKiKlWOM3wgcJxoMaDzkN9tQVFkAoykT+DnkKCCfakE1yHfy/9IigM/G6jYA+utke4H/hbasvQ+",
-	"RfCt8Wf4Wxn/AoHz0f33xyMZow8LI/ufJrLx5R8OJwIlM5xIe3bmKU1/B4/Cs9KhCCiZ78oSva+6pumP",
-	"pPgumtAEePqrIN1+V/rwLQAA///PolxTpAgAAA==",
+	"H4sIAAAAAAAC/8xXTY/bNhD9K8S0R3ZlJ/2Cb94ejD0UMXaLXoIcKHEkM5VIhaS8NQz/92JIyV+SdpUm",
+	"BvZk2RySM++9eWPtITNVbTRq72CxB5dtsBLhUWReGU1PEl1mVR2/wlKzuMSMZoKlRlgJHGprarReYdjs",
+	"dzXSJ+qmgsVHsLhFUQKHvBQFfOJtADhvlS7gwOHftTnbCUp7LNDSym5k5cDB4pdGWZR0RTigjW7PP91j",
+	"0s+YeTot5jtUldJSbZVsRMn+VBqfakSJNhbImTcsRZYZ7a0pS5Qs3TFxsakuxQ5tD4oNqmLjh0tT8uz3",
+	"Exa6qVK0H/J7U6UjoHQhj1gJpZUuvib2L1XiK7EvhDgv/AW52vgnL6xH0oHSa2sKi45YIHGVGBdyoUqU",
+	"g9z77jLlsQoPP1rMYQE/JCd5Jq02E4oOu+Ixwlqxo+/PSvrNBKHE23hHTLfxGvZrLEZxHCWjgyrwPKrF",
+	"D0GCoerpwpmgkKlwvALDUN6ZReFxJSp8xC8NOt9P/rq0lwi9iJ3SFcLKKY5wteEK71FWClHh9y0oPWY8",
+	"SeDRogYULhsrhk3ZYWa0dMzkjNJnXSRnuTUVc7E9ycRypZXbhI78H340hvyAK0SRyNgFrTkcL++7wGvc",
+	"da10xKBHZ9qFjvAafKPHay/vOXB4BxzeA4efgcMvwOFX4PAbcPidbENJiXQ9VrXfdSONrq/S20y2rvTz",
+	"CdcvkHYpnZu+OO5F9g9qyZbrB+ZqzFhuLPMbvBhzQTY/0UgzulQ6LrpnxBotU9rVlA1LhfclhmASkPIE",
+	"KZyds1w/AIctWhfvnt/N7mZUq6lRi1rBAt7fze4I4Fr4TSg/2c4TOjF6oIl2QhwFoh8kLGBtnP97vgpB",
+	"ERx0/t7IHYXSUEYddom6LlUW9iWfXeyU2FavNV3f0w6XPHjbYPjB1Ua7mOy72fy7JRAwDXdesvfUZBk6",
+	"lzdluWNtUzHB2nAOrqkqYXewgD9oUenifPWIbbKnjwd5oDwKHMB4hR3EqxAZKLKiQo/WweLjHhTlQ7TR",
+	"lAguCUUXegkUPyv6utE/9UCc3RzE5RG5AdxW6JkInaFylb2EXXJy8kkQHt3rTQL5LcOoD3GslSk9LM4A",
+	"clnGv9MuWJCYAHWyD59fo9uYyH3cBjcUWwtNH4pH9I3Vrns7ijOYDNeh3bYGPyq/I+A30QwfPCg9A2uy",
+	"+qbRlsSXxWnePkDgMuvm+1vH4zZzqX0Nnz6Mrowvvqo/C3d0QHc2UIYmCNKfgNMrPun2qPTDfwEAAP//",
+	"M7H41DEQAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

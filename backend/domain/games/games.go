@@ -50,6 +50,7 @@ func (gm *GamesManager) CreateBoard(gameId string, boardId string, boardOptions 
 		RemainingTiles: boardOptions.Height * boardOptions.Width,
 		RemainingBombs: boardOptions.NumberOfBombs,
 		State:          NotStarted,
+		Id:             boardId,
 	}
 	board.GenerateEmptyBoard()
 

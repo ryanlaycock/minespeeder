@@ -20,7 +20,7 @@
                         "description": "Returns a board from the server"
                     }
                 },
-                "summary": "GET a specific board"
+                "summary": "Get a specific board"
             },
             "parameters": [
                 {
@@ -78,6 +78,90 @@
                 },
                 "summary": "Create an action on the board"
             }
+        },
+        "/v1/games/{gameId}": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "gameId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/game"
+                                }
+                            }
+                        },
+                        "description": "A created game"
+                    }
+                },
+                "summary": "Get a specific game"
+            }
+        },
+        "/v1/games": {
+            "post": {
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/createGameRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/game"
+                                }
+                            }
+                        },
+                        "description": "Successfully created a game"
+                    }
+                },
+                "summary": "Creating a game"
+            }
+        },
+        "/v1/games/{gameId}/boards": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "gameId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/board"
+                                    }
+                                }
+                            }
+                        },
+                        "description": "Boards in a game"
+                    }
+                },
+                "summary": "Get all boards for a game"
+            }
         }
     },
     "components": {
@@ -92,7 +176,8 @@
                     "numberOfTiles",
                     "numberOfRemainingTiles",
                     "numberOfRemainingBombs",
-                    "state"
+                    "state",
+                    "id"
                 ],
                 "type": "object",
                 "properties": {
@@ -135,6 +220,10 @@
                             "completed",
                             "failed"
                         ],
+                        "type": "string"
+                    },
+                    "id": {
+                        "description": "",
                         "type": "string"
                     }
                 }
@@ -199,6 +288,98 @@
                             "reveal",
                             "flag"
                         ],
+                        "type": "string"
+                    }
+                }
+            },
+            "game": {
+                "description": "",
+                "required": [
+                    "numberOfBoards",
+                    "state",
+                    "duration",
+                    "boardOptions",
+                    "boards",
+                    "id"
+                ],
+                "type": "object",
+                "properties": {
+                    "numberOfBoards": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "state": {
+                        "description": "",
+                        "enum": [
+                            "created",
+                            "started",
+                            "finished"
+                        ],
+                        "type": "string"
+                    },
+                    "duration": {
+                        "description": "seconds of game duration, from started to finished",
+                        "type": "integer"
+                    },
+                    "boardOptions": {
+                        "$ref": "#/components/schemas/boardOptions",
+                        "description": ""
+                    },
+                    "boards": {
+                        "description": "",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/board"
+                        }
+                    },
+                    "id": {
+                        "description": "",
+                        "type": "string"
+                    }
+                }
+            },
+            "boardOptions": {
+                "description": "",
+                "required": [
+                    "height",
+                    "width",
+                    "numberOfBombs"
+                ],
+                "type": "object",
+                "properties": {
+                    "height": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "width": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "numberOfBombs": {
+                        "description": "",
+                        "type": "integer"
+                    }
+                }
+            },
+            "createGameRequest": {
+                "description": "",
+                "required": [
+                    "numberOfBoards",
+                    "boardOptions",
+                    "id"
+                ],
+                "type": "object",
+                "properties": {
+                    "numberOfBoards": {
+                        "description": "",
+                        "type": "integer"
+                    },
+                    "boardOptions": {
+                        "$ref": "#/components/schemas/boardOptions",
+                        "description": ""
+                    },
+                    "id": {
+                        "description": "",
                         "type": "string"
                     }
                 }

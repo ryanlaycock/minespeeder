@@ -4,7 +4,17 @@ package games
 // contains a map of boards, identified by playerId
 type Game struct {
 	Boards map[string]Board
+	Id     string
+	State  GameState
 }
+
+type GameState string
+
+const (
+	Created  GameState = "created"
+	Started  GameState = "started"
+	Finished GameState = "finished"
+)
 
 type Board struct {
 	Tiles          []Tile
@@ -15,6 +25,7 @@ type Board struct {
 	RemainingTiles int
 	RemainingBombs int
 	State          BoardState
+	Id             string
 }
 
 type BoardOptions struct {
