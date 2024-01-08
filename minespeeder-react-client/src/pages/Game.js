@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import Board from '../components/Board';
 
-// Refactor to typescript
+// Refactor to typescript?
 
 export default function Game() {
   const { gameId } = useParams();

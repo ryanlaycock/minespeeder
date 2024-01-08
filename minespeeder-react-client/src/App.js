@@ -1,11 +1,13 @@
 import { Routes, Route } from 'react-router-dom';
-import Game from './pages/Games';
+import Game from './pages/Game';
+import Home from './pages/Home';
 
 const App = () => {
  return (
     <>
        <Routes>
-          <Route path="/game/:gameId" element={<Game />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/game/:gameId" element={<Game />} />
        </Routes>
     </>
  );
