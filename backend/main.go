@@ -15,5 +15,5 @@ func main() {
 
 	fmt.Println("Starting server")
 	m.ListenAndServe()
-	fmt.Println("Server started")
+	fmt.Println("Server closed")
 }
