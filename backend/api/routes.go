@@ -81,6 +81,27 @@ func (m *MineSpeederServer) PostV1Games(
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
+func (m *MineSpeederServer) GetV1GamesGameIdBoards( // TODO Do we need this?
+	w http.ResponseWriter,
+	r *http.Request,
+	gameId string,
+) {
+	game, err := m.gamesManager.GetGame(gameId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	resp := []Board{}
+	for _, board := range game.Boards {
+		resp = append(resp, DomainBoardToAPIBoard(board))
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(resp)
+
+}
+
 // GetV1GamesGameIdBoardsBoardId implements ServerInterface.
 func (m *MineSpeederServer) GetV1GamesGameIdBoardsBoardId(
 	w http.ResponseWriter,
